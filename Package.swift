@@ -13,6 +13,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-crypto.git", from: "3.0.0"),
         .package(url: "https://github.com/grpc/grpc-swift-2.git", from: "2.0.0"),
         .package(url: "git@github.com:Mendesky/DDDKit.git", from: "1.12.0"),
+        .package(url: "https://github.com/gradyzhuo/KurrentDB-Swift.git", from: "1.10.0"),
     ],
     targets: [
         .target(
@@ -33,6 +34,7 @@ let package = Package(
             dependencies: [
                 "AuthKit",
                 .product(name: "DDDKit", package: "DDDKit"),
+                .product(name: "KurrentDB", package: "KurrentDB-Swift"),
             ]
         ),
         .testTarget(
@@ -53,6 +55,7 @@ let package = Package(
                 "AuthKit",
                 .product(name: "DDDKit", package: "DDDKit"),
                 .product(name: "TestUtility", package: "DDDKit"),
+                .product(name: "KurrentDB", package: "KurrentDB-Swift"),
             ],
             resources: [
                 .process("event-generator-config.yaml"),

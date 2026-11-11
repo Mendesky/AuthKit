@@ -56,6 +56,19 @@ struct SingleUseCodeRedeemerTests {
         }
     }
 
+    @Test func `與版本衝突無關的寫入錯誤原樣丟出且不消耗 code`() async throws {
+        try await withTestBundle(client: kdbClient) { bundle in
+            let id = try await issue(bundle: bundle, verifier: "v")
+            let failingRedeemer = SingleUseCodeRedeemer(repository: FailingSaveTestCodeRepository(coordinator: repository.coordinator))
+
+            await #expect(throws: UnrelatedStoreError()) {
+                _ = try await failingRedeemer.redeem(id: id, codeVerifier: "v")
+            }
+            let redeemed = try await redeemer.redeem(id: id, codeVerifier: "v")
+            #expect(redeemed.id == id)
+        }
+    }
+
     @Test func `verifier 錯誤不消耗 code`() async throws {
         try await withTestBundle(client: kdbClient) { bundle in
             let id = try await issue(bundle: bundle, verifier: "v")
