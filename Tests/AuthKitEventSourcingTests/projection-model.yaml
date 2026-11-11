@@ -1,0 +1,2 @@
+# 測試用 aggregate 不需要 read model；aggregate root 的 protocol 由產生器自動加入。
+{}

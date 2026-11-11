@@ -1,0 +1,12 @@
+TestCodeIssued:
+  kind: createdEvent
+  aggregateRootId:
+    alias: testCodeId
+  properties:
+    codeChallenge: String, 0
+    expiresAt: Date, 1
+
+TestCodeDeleted:
+  aggregateRootId:
+    alias: testCodeId
+  kind: deletedEvent
