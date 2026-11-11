@@ -4,7 +4,7 @@ import AuthKitEventSourcing
 
 /// 測試用的單次兌換 code aggregate，寫法比照 IdentityContext 的 `AuthCode`。
 final class TestCode: TestCodeAggregateProtocol, SingleUseCode {
-    let metadata: AggregateRootMetadata = .init()
+    var metadata: AggregateRootMetadata = .init()
 
     let id: String
     let codeChallenge: String
@@ -25,8 +25,14 @@ final class TestCode: TestCodeAggregateProtocol, SingleUseCode {
         try clearAllDomainEvents()
     }
 
-    func markDelete() throws {
-        try apply(event: TestCodeDeleted(testCodeId: id))
+    func when(event: TestCodeDeleted) throws {
         metadata.delete()
+    }
+}
+
+extension TestCodeDeleted {
+    /// `DeletedEvent` 要求的 init；產生器用的是 alias（`testCodeId`）。
+    init(id: UUID, aggregateRootId: String, occurred: Date) {
+        self.init(id: id, testCodeId: aggregateRootId, occurred: occurred)
     }
 }

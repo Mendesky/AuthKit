@@ -14,7 +14,7 @@ struct SingleUseCodeRedeemerTests {
     let redeemer: SingleUseCodeRedeemer<TestCodeRepository>
 
     init() {
-        self.repository = TestCodeRepository(coordinator: .init(client: kdbClient, eventMapper: TestCodeAggregateEventMapper()))
+        self.repository = TestCodeRepository(store: .init(client: kdbClient, eventMapper: TestCodeAggregateEventMapper()))
         self.redeemer = SingleUseCodeRedeemer(repository: repository)
     }
 
@@ -22,7 +22,7 @@ struct SingleUseCodeRedeemerTests {
     func issue(bundle: TestBundle, verifier: String, expiresIn: TimeInterval = 600) async throws -> String {
         let id = await bundle.generateAggregateRootId(for: TestCode.self)
         let code = try TestCode(id: id, codeChallenge: PKCE.challenge(forVerifier: verifier), expiresAt: Date().addingTimeInterval(expiresIn))
-        try await repository.save(aggregateRoot: code, external: nil)
+        try await repository.save(aggregateRoot: code)
         return id
     }
 
@@ -59,7 +59,7 @@ struct SingleUseCodeRedeemerTests {
     @Test func `與版本衝突無關的寫入錯誤原樣丟出且不消耗 code`() async throws {
         try await withTestBundle(client: kdbClient) { bundle in
             let id = try await issue(bundle: bundle, verifier: "v")
-            let failingRedeemer = SingleUseCodeRedeemer(repository: FailingSaveTestCodeRepository(coordinator: repository.coordinator))
+            let failingRedeemer = SingleUseCodeRedeemer(repository: FailingSaveTestCodeRepository(store: repository.store))
 
             await #expect(throws: UnrelatedStoreError()) {
                 _ = try await failingRedeemer.redeem(id: id, codeVerifier: "v")
@@ -87,7 +87,7 @@ struct SingleUseCodeRedeemerTests {
 
             _ = try await redeemer.redeem(id: id, codeVerifier: "v")
             // 兌換成功後 stream 已被 purge
-            #expect(try await repository.coordinator.fetchEvents(byId: id)?.latestRevision == nil)
+            #expect(try await repository.store.fetchEvents(byId: id)?.latestRevision == nil)
             await #expect(throws: SingleUseCodeError.notFound) {
                 _ = try await redeemer.redeem(id: id, codeVerifier: "v")
             }

@@ -1,7 +1,6 @@
 import Foundation
 import AuthKit
 import DDDKit
-import KurrentDB
 
 /// 以版本檢查保證一個 `SingleUseCode` 只會被兌換一次。
 ///
@@ -32,14 +31,14 @@ public struct SingleUseCodeRedeemer<Repository: EventSourcingRepository> where R
 
         try aggregate.markDelete()
         do {
-            try await repository.save(aggregateRoot: aggregate, external: nil)
-        } catch KurrentError.wrongExpectedVersion {
-            // 以 find 帶回的 revision 寫入失敗：已被其他呼叫者兌換。
+            try await repository.save(aggregateRoot: aggregate)
+        } catch let error as DDDError where error.code == .commitConflict || error.code == .streamPurged {
+            // 以 find 帶回的 revision 寫入失敗，或 stream 已被清除：已被其他呼叫者兌換。
             throw SingleUseCodeError.alreadyRedeemed
         }
 
-        // 不能用 repository.purge(byId:)：它會先 find，而 find 對已標記刪除的 aggregate 回 nil。
-        try? await repository.coordinator.purge(byId: id)
+        // purge 是 tombstone：stream 永久移除，同一個 id 不能再被使用。
+        try? await repository.purge(byId: id)
         return aggregate
     }
 }

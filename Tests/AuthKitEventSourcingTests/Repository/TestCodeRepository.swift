@@ -1,12 +1,12 @@
 import DDDKit
 
-final class TestCodeRepository: EventSourcingRepository {
-    typealias StorageCoordinator = ESDBStorageCoordinator<TestCode>
+struct TestCodeRepository: EventSourcingRepository {
+    typealias Store = KurrentStorageCoordinator<TestCode, CustomMetadata>
     typealias AggregateRootType = TestCode
 
-    let coordinator: StorageCoordinator
+    let store: Store
 
-    init(coordinator: StorageCoordinator) {
-        self.coordinator = coordinator
+    init(store: Store) {
+        self.store = store
     }
 }

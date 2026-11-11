@@ -12,8 +12,8 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/apple/swift-crypto.git", from: "3.0.0"),
         .package(url: "https://github.com/grpc/grpc-swift-2.git", from: "2.0.0"),
-        .package(url: "git@github.com:Mendesky/DDDKit.git", from: "1.12.0"),
-        .package(url: "https://github.com/gradyzhuo/KurrentDB-Swift.git", from: "1.10.0"),
+        .package(url: "https://github.com/gradyzhuo/swift-ddd-kit.git", from: "1.4.0"),
+        .package(url: "https://github.com/gradyzhuo/swift-kurrentdb.git", from: "2.6.0"),
     ],
     targets: [
         .target(
@@ -33,8 +33,7 @@ let package = Package(
             name: "AuthKitEventSourcing",
             dependencies: [
                 "AuthKit",
-                .product(name: "DDDKit", package: "DDDKit"),
-                .product(name: "KurrentDB", package: "KurrentDB-Swift"),
+                .product(name: "DDDKit", package: "swift-ddd-kit"),
             ]
         ),
         .testTarget(
@@ -53,9 +52,9 @@ let package = Package(
             dependencies: [
                 "AuthKitEventSourcing",
                 "AuthKit",
-                .product(name: "DDDKit", package: "DDDKit"),
-                .product(name: "TestUtility", package: "DDDKit"),
-                .product(name: "KurrentDB", package: "KurrentDB-Swift"),
+                .product(name: "DDDKit", package: "swift-ddd-kit"),
+                .product(name: "TestUtility", package: "swift-ddd-kit"),
+                .product(name: "KurrentDB", package: "swift-kurrentdb"),
             ],
             resources: [
                 .process("event-generator-config.yaml"),
@@ -63,8 +62,8 @@ let package = Package(
                 .process("projection-model.yaml"),
             ],
             plugins: [
-                .plugin(name: "DomainEventGeneratorPlugin", package: "DDDKit"),
-                .plugin(name: "ProjectionModelGeneratorPlugin", package: "DDDKit"),
+                .plugin(name: "DomainEventGeneratorPlugin", package: "swift-ddd-kit"),
+                .plugin(name: "ModelGeneratorPlugin", package: "swift-ddd-kit"),
             ]
         ),
     ],
