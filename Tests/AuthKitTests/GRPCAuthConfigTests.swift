@@ -12,5 +12,8 @@ struct GRPCAuthConfigTests {
         #expect(GRPCAuthConfig.resolve(token: "", disabledFlag: nil) == .notConfigured)
         #expect(GRPCAuthConfig.resolve(token: nil, disabledFlag: nil) == .notConfigured)
         #expect(GRPCAuthConfig.resolve(token: nil, disabledFlag: "true") == .notConfigured)
+        #expect(GRPCAuthConfig.resolve(token: " t\n", disabledFlag: nil) == .enabled(token: "t"))
+        #expect(GRPCAuthConfig.resolve(token: "  \n", disabledFlag: nil) == .notConfigured)
+        #expect(GRPCAuthConfig.resolve(token: "  ", disabledFlag: "1") == .disabled)
     }
 }
