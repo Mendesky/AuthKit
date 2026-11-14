@@ -1,14 +1,14 @@
 import Foundation
 import _CryptoExtras
 
-/// 以 RS256 簽發 RFC 9068 `at+jwt` access token。無狀態,只依賴 swift-crypto。
+/// 以 RS256 簽發 RFC 9068 `at+jwt` access token。無狀態，只依賴 swift-crypto。
 public struct AccessTokenSigner: Sendable {
     public static let minimumModulusBits = 2048
 
     public let kid: String
     private let privateKey: _RSA.Signing.PrivateKey
 
-    /// 從 RSA 私鑰 JWK(RFC 7517/7518)建立。必須帶 `kid`、`n/e/d/p/q`。
+    /// 從 RSA 私鑰 JWK（RFC 7517/7518）建立。必須帶 `kid`、`n/e/d/p/q`。
     public init(signingKeyJWK: Data) throws {
         guard let jwk = try? JSONDecoder().decode(PrivateJWK.self, from: signingKeyJWK) else {
             throw AccessTokenSignerError.malformedJWK
@@ -16,6 +16,9 @@ public struct AccessTokenSigner: Sendable {
         guard jwk.kty == "RSA" else { throw AccessTokenSignerError.notRSA }
         guard let kid = jwk.kid, !kid.isEmpty else { throw AccessTokenSignerError.missingKid }
         guard jwk.d != nil else { throw AccessTokenSignerError.publicKeyOnly }
+        // RFC 7517：有宣告 alg／use 時必須與本 signer 的用途一致（RS256／sig）。
+        if let alg = jwk.alg, alg != "RS256" { throw AccessTokenSignerError.invalidKey }
+        if let use = jwk.use, use != "sig" { throw AccessTokenSignerError.invalidKey }
         guard let n = jwk.n.flatMap(Base64URL.decode),
               let e = jwk.e.flatMap(Base64URL.decode),
               let d = jwk.d.flatMap(Base64URL.decode),
@@ -23,7 +26,7 @@ public struct AccessTokenSigner: Sendable {
               let q = jwk.q.flatMap(Base64URL.decode)
         else { throw AccessTokenSignerError.invalidKey }
 
-        // 在建立 swift-crypto key 之前檢查,讓小金鑰一定得到 .keyTooSmall
+        // 在建立 swift-crypto key 之前檢查，讓小金鑰一定得到 .keyTooSmall
         try Self.requireMinimumModulusBits(Self.modulusBits(n))
 
         let key: _RSA.Signing.PrivateKey
@@ -35,8 +38,8 @@ public struct AccessTokenSigner: Sendable {
         try self.init(privateKey: key, kid: kid)
     }
 
-    /// 從 RSA 私鑰 PEM(PKCS#8 或 PKCS#1)建立,kid 由呼叫端明確提供。
-    /// 用 unsafe 版本解析以接受小金鑰,讓 `.keyTooSmall` 由共用的精確 bit 數檢查判斷。
+    /// 從 RSA 私鑰 PEM（PKCS#8 或 PKCS#1）建立，kid 由呼叫端明確提供。
+    /// 用 unsafe 版本解析以接受小金鑰，讓 `.keyTooSmall` 由共用的精確 bit 數檢查判斷。
     public init(signingKeyPEM: String, kid: String) throws {
         let key: _RSA.Signing.PrivateKey
         do {
@@ -47,7 +50,7 @@ public struct AccessTokenSigner: Sendable {
         try self.init(privateKey: key, kid: kid)
     }
 
-    /// 共用的 kid 與 bit 數檢查(PEM 路徑也走這裡)。
+    /// 共用的 kid 與 bit 數檢查（PEM 路徑也走這裡）。
     init(privateKey: _RSA.Signing.PrivateKey, kid: String) throws {
         guard !kid.isEmpty else { throw AccessTokenSignerError.missingKid }
         let modulus = try privateKey.publicKey.getKeyPrimitives().modulus
@@ -56,12 +59,12 @@ public struct AccessTokenSigner: Sendable {
         self.kid = kid
     }
 
-    /// 簽發 RS256 `at+jwt`。`now` 的小數秒會捨去,`exp = iat + lifetime 的整秒部分`。
+    /// 簽發 RS256 `at+jwt`。`now` 的小數秒會捨去，`exp = iat + lifetime 的整秒部分`。
     public func sign(_ claims: AccessTokenClaims, now: Date = .now) throws -> String {
         try claims.validate()
 
-        // 公開的錯誤 enum 已固定、不新增 case,所以 `now` 無法表示成整數秒與 exp 溢位這兩種
-        // 實務上不可能發生的情況,都借用 `.nonPositiveLifetime`(語意:算不出合法的 exp)。
+        // 公開的錯誤 enum 已固定、不新增 case，所以 `now` 無法表示成整數秒與 exp 溢位這兩種
+        // 實務上不可能發生的情況，都借用 `.nonPositiveLifetime`（語意：算不出合法的 exp）。
         guard let iat = Int(exactly: now.timeIntervalSince1970.rounded(.down)) else {
             throw AccessTokenSignerError.nonPositiveLifetime
         }
@@ -87,7 +90,7 @@ public struct AccessTokenSigner: Sendable {
         return "\(signingInput).\(Base64URL.encode(signature.rawRepresentation))"
     }
 
-    /// modulus 去掉前導 0 之後的精確 bit 數(不是 byte 對齊的 `keySizeInBits`)。
+    /// modulus 去掉前導 0 之後的精確 bit 數（不是 byte 對齊的 `keySizeInBits`）。
     static func modulusBits(_ n: Data) -> Int {
         let bytes = Array(n.drop(while: { $0 == 0 }))
         guard let lead = bytes.first else { return 0 }
@@ -103,6 +106,8 @@ public struct AccessTokenSigner: Sendable {
     private struct PrivateJWK: Decodable {
         let kty: String?
         let kid: String?
+        let alg: String?
+        let use: String?
         let n: String?
         let e: String?
         let d: String?
@@ -116,7 +121,7 @@ public struct AccessTokenSigner: Sendable {
         let kid: String
     }
 
-    /// RFC 8693 巢狀 act;最內層的 `act` 為 nil,由合成的 `encodeIfPresent` 省略。
+    /// RFC 8693 巢狀 act；最內層的 `act` 為 nil，由合成的 `encodeIfPresent` 省略。
     private final class ActorClaim: Encodable {
         let sub: String
         let act: ActorClaim?

@@ -29,6 +29,22 @@ struct AccessTokenSignerKeyTests {
         }
     }
 
+    @Test func rejectsJWKWithNonRS256Alg() throws {
+        var jwk = try fixtureJWKObject("rsa-2048.jwk.json"); jwk["alg"] = "PS256"
+        #expect(throws: AccessTokenSignerError.invalidKey) { try AccessTokenSigner(signingKeyJWK: try jwkData(jwk)) }
+    }
+
+    @Test func rejectsJWKWithNonSigUse() throws {
+        var jwk = try fixtureJWKObject("rsa-2048.jwk.json"); jwk["use"] = "enc"
+        #expect(throws: AccessTokenSignerError.invalidKey) { try AccessTokenSigner(signingKeyJWK: try jwkData(jwk)) }
+    }
+
+    @Test func acceptsJWKWithRS256AlgAndSigUse() throws {
+        var jwk = try fixtureJWKObject("rsa-2048.jwk.json"); jwk["alg"] = "RS256"; jwk["use"] = "sig"
+        let signer = try AccessTokenSigner(signingKeyJWK: try jwkData(jwk))
+        #expect(signer.kid == "test-2048")
+    }
+
     @Test func rejectsPublicOnlyJWK() throws {
         var jwk = try fixtureJWKObject("rsa-2048.jwk.json")
         for k in ["d", "p", "q", "dp", "dq", "qi"] { jwk[k] = nil }

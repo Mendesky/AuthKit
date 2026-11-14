@@ -10,7 +10,7 @@ let package = Package(
         .library(name: "AuthKitEventSourcing", targets: ["AuthKitEventSourcing"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-crypto.git", from: "3.6.0"),
+        .package(url: "https://github.com/apple/swift-crypto.git", from: "3.8.0"),
         .package(url: "https://github.com/grpc/grpc-swift-2.git", from: "2.0.0"),
         .package(url: "https://github.com/gradyzhuo/swift-ddd-kit.git", from: "1.4.0"),
         .package(url: "https://github.com/gradyzhuo/swift-kurrentdb.git", from: "2.6.0"),

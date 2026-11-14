@@ -9,7 +9,7 @@ AuthKit 是 library：`Package.resolved` 不納入版本控制（已列入 `.git
 
 ## Targets
 
-- **AuthKit** — 無狀態純邏輯，僅依賴 swift-crypto（`Crypto`、`_CryptoExtras`，3.6.0 起；同一個 package）；必須保持無額外依賴：
+- **AuthKit** — 無狀態純邏輯，僅依賴 swift-crypto（`Crypto`、`_CryptoExtras`，3.8.0 起；同一個 package）；必須保持無額外依賴：
   - `ConstantTime` 常數時間字串比較
   - `PKCE` S256 challenge 產生／驗證（`verify` 不檢查 verifier 格式；`isValidVerifier` 另行檢查 RFC 7636 §4.1）
   - `BearerTokenAuth` gRPC bearer token 授權決策（跨 Context 同一份契約，行為不可單方面改動）
