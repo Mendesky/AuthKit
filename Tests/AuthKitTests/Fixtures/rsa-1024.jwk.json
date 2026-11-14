@@ -1,0 +1,12 @@
+{
+  "kty": "RSA",
+  "kid": "test-1024",
+  "n": "r6qkrkFfc5JWWRTDWNn4SMCzlOd9EUgExqHkbSfcD0h__rleXdhQx7Tealg6BC31YS1OKjqzu-5jW2CJK64F67WpwV7VCjv71DYMGa6Ti508q_eWeSG85HwpnhJATkREAKMKExXcgkm2H36gJ3wJTY7pe9sy1I4sKF05VMnL2Fc",
+  "e": "AQAB",
+  "d": "MoXwwVF6A4JmJU7MdGSUfVA3Fi-SEANXpE1xplddemPOtFNaKcGKUjXZ9loTrZoORfnCznB9uyJwHxrfuNlfSBayMqLxxqg5a2r3sb32qwKm1M6W6aPdypK-2306V7V6OchxnV2TMksi8aZm7xw-G7qtgXt6-Z-PU9odwx72gHk",
+  "p": "2-E0lUyz_xipyeMosdcsOd_SECHs6TtyYfaJugU63Vuqp48TmFPTXk_IM5r-ukn4SzYZKLljDOwN3DJCbA8xYw",
+  "q": "zIYaqK_FDOAS70MFos5sRdMni2cgP_TC5GIffnce-dkYABRIZNk146C7NVYA7uBLyZJTYJWmp_VtGfZBJR7JfQ",
+  "dp": "dHJserVIjkztfrIDF0wxa-URRuHwqgSFq0P55L5oUlr9ogewBPg_9K6kBFCNnvMVwB9Ca8LipjFNldQ4QSo6qQ",
+  "dq": "MXq0EmFLq7y99_Jf96421YGrDHerfq2JRNVURzUsYkeaHdLKXNOLzQECqXmgCiprS13CHBi4U-P1PBWuVvumxQ",
+  "qi": "0P0FOV3XYaCjhWESkXShT-VG3pFGTVoilOLtYRP07vOR68I8_c-jpMCu1tEh2yiOOW6Oj0XZIetKykJTnfEEtg"
+}
