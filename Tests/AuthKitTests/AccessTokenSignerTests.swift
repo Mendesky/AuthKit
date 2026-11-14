@@ -129,7 +129,7 @@ struct AccessTokenSignerTests {
 
     @Test func specialCharactersAreJSONEscaped() throws {
         var jwk = try fixtureJWKObject("rsa-2048.jwk.json")
-        let kid = #"k"\/1"#, subject = #"a"b\c"#
+        let kid = "k/1", subject = #"a"b\c"#
         jwk["kid"] = kid
         let special = try AccessTokenSigner(signingKeyJWK: try jwkData(jwk))
         let jwt = try special.sign(claims(subject: subject), now: now)

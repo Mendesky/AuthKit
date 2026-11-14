@@ -5,7 +5,7 @@ public enum AccessTokenSignerError: Error, Equatable, Sendable {
     case malformedJWK
     /// kty != "RSA"
     case notRSA
-    /// 沒有 kid 或是空字串
+    /// kid 缺漏、為空，或含 Middleware 不接受的字元（只允許可見 ASCII 0x21–0x7E，且不可為 `"` 或 `\`）
     case missingKid
     /// JWK 沒有 d
     case publicKeyOnly

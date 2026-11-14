@@ -14,7 +14,7 @@ public struct AccessTokenSigner: Sendable {
             throw AccessTokenSignerError.malformedJWK
         }
         guard jwk.kty == "RSA" else { throw AccessTokenSignerError.notRSA }
-        guard let kid = jwk.kid, !kid.isEmpty else { throw AccessTokenSignerError.missingKid }
+        guard let kid = jwk.kid else { throw AccessTokenSignerError.missingKid }
         guard jwk.d != nil else { throw AccessTokenSignerError.publicKeyOnly }
         // RFC 7517：有宣告 alg／use 時必須與本 signer 的用途一致（RS256／sig）。
         if let alg = jwk.alg, alg != "RS256" { throw AccessTokenSignerError.invalidKey }
@@ -50,9 +50,12 @@ public struct AccessTokenSigner: Sendable {
         try self.init(privateKey: key, kid: kid)
     }
 
-    /// 共用的 kid 與 bit 數檢查（PEM 路徑也走這裡）。
+    /// 共用的 kid 與 bit 數檢查（JWK、PEM 路徑都走這裡）。
+    /// kid 規則與 Middleware 的 trust 一致：非空，且每個 UTF-8 byte 都在 0x21...0x7E、不是 `"`（0x22）或 `\`（0x5C）。
     init(privateKey: _RSA.Signing.PrivateKey, kid: String) throws {
-        guard !kid.isEmpty else { throw AccessTokenSignerError.missingKid }
+        guard !kid.isEmpty,
+              kid.utf8.allSatisfy({ (0x21...0x7E).contains($0) && $0 != 0x22 && $0 != 0x5C })
+        else { throw AccessTokenSignerError.missingKid }
         let modulus = try privateKey.publicKey.getKeyPrimitives().modulus
         try Self.requireMinimumModulusBits(Self.modulusBits(modulus))
         self.privateKey = privateKey

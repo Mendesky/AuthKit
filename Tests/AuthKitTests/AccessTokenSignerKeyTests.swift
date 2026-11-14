@@ -95,6 +95,27 @@ struct AccessTokenSignerKeyTests {
         #expect(throws: AccessTokenSignerError.missingKid) { try AccessTokenSigner(signingKeyPEM: pem, kid: "") }
     }
 
+    // Middleware 的 trust 只接受 0x21...0x7E 且非 `"`、`\` 的 kid。
+    static let invalidKids = ["a b", "a\"b", "a\\b", "a\u{01}b", "金鑰"]
+
+    @Test(arguments: invalidKids) func jwkRejectsKidMiddlewareWouldReject(kid: String) throws {
+        var jwk = try fixtureJWKObject("rsa-2048.jwk.json"); jwk["kid"] = kid
+        #expect(throws: AccessTokenSignerError.missingKid) { try AccessTokenSigner(signingKeyJWK: try jwkData(jwk)) }
+    }
+
+    @Test(arguments: invalidKids) func pemRejectsKidMiddlewareWouldReject(kid: String) throws {
+        let pem = String(decoding: try loadFixture("rsa-2048.pem"), as: UTF8.self)
+        #expect(throws: AccessTokenSignerError.missingKid) { try AccessTokenSigner(signingKeyPEM: pem, kid: kid) }
+    }
+
+    @Test func acceptsPrintableASCIIKid() throws {
+        let kid = "key-2026_11.a/b"
+        var jwk = try fixtureJWKObject("rsa-2048.jwk.json"); jwk["kid"] = kid
+        #expect(try AccessTokenSigner(signingKeyJWK: try jwkData(jwk)).kid == kid)
+        let pem = String(decoding: try loadFixture("rsa-2048.pem"), as: UTF8.self)
+        #expect(try AccessTokenSigner(signingKeyPEM: pem, kid: kid).kid == kid)
+    }
+
     @Test func pemRejects1024BitKey() throws {
         let pem = String(decoding: try loadFixture("rsa-1024.pem"), as: UTF8.self)
         #expect(throws: AccessTokenSignerError.keyTooSmall(bits: 1024)) { try AccessTokenSigner(signingKeyPEM: pem, kid: "k") }
