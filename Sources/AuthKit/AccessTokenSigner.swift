@@ -56,6 +56,35 @@ public struct AccessTokenSigner: Sendable {
         self.kid = kid
     }
 
+    /// 簽發 RS256 `at+jwt`。`now` 的小數秒會捨去,`exp = iat + lifetime 的整秒部分`。
+    public func sign(_ claims: AccessTokenClaims, now: Date = .now) throws -> String {
+        try claims.validate()
+
+        guard let iat = Int(exactly: now.timeIntervalSince1970.rounded(.down)) else {
+            throw AccessTokenSignerError.nonPositiveLifetime
+        }
+        let (exp, overflow) = iat.addingReportingOverflow(Int(claims.lifetime.components.seconds))
+        guard !overflow else { throw AccessTokenSignerError.nonPositiveLifetime }
+
+        var jtiBytes = [UInt8](repeating: 0, count: 16)
+        var rng = SystemRandomNumberGenerator()
+        for i in jtiBytes.indices { jtiBytes[i] = rng.next() }
+
+        let payload = Payload(
+            iss: claims.issuer, sub: claims.subject, sub_type: claims.subjectType.rawValue,
+            act: claims.actors.reversed().reduce(nil) { ActorClaim(sub: $1, act: $0) },
+            client_id: claims.clientId, aud: claims.audience, scope: claims.scope.joined(separator: " "),
+            sid: claims.sessionId, iat: iat, exp: exp, jti: Base64URL.encode(Data(jtiBytes)))
+
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
+        let header = Base64URL.encode(try encoder.encode(Header(alg: "RS256", typ: "at+jwt", kid: kid)))
+        let body = Base64URL.encode(try encoder.encode(payload))
+        let signingInput = "\(header).\(body)"
+        let signature = try privateKey.signature(for: Data(signingInput.utf8), padding: .insecurePKCS1v1_5)
+        return "\(signingInput).\(Base64URL.encode(signature.rawRepresentation))"
+    }
+
     /// modulus 去掉前導 0 之後的精確 bit 數(不是 byte 對齊的 `keySizeInBits`)。
     static func modulusBits(_ n: Data) -> Int {
         let bytes = Array(n.drop(while: { $0 == 0 }))
@@ -77,5 +106,32 @@ public struct AccessTokenSigner: Sendable {
         let d: String?
         let p: String?
         let q: String?
+    }
+
+    private struct Header: Encodable {
+        let alg: String
+        let typ: String
+        let kid: String
+    }
+
+    /// RFC 8693 巢狀 act;最內層的 `act` 為 nil,由合成的 `encodeIfPresent` 省略。
+    private final class ActorClaim: Encodable {
+        let sub: String
+        let act: ActorClaim?
+        init(sub: String, act: ActorClaim?) { self.sub = sub; self.act = act }
+    }
+
+    private struct Payload: Encodable {
+        let iss: String
+        let sub: String
+        let sub_type: String
+        let act: ActorClaim?
+        let client_id: String
+        let aud: [String]
+        let scope: String
+        let sid: String?
+        let iat: Int
+        let exp: Int
+        let jti: String
     }
 }

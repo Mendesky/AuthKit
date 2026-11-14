@@ -1,5 +1,6 @@
 import Foundation
 import _CryptoExtras
+@testable import AuthKit
 
 struct FixtureError: Error { let message: String }
 
@@ -43,4 +44,22 @@ func jwtSegment(_ jwt: String, _ index: Int) throws -> [String: Any] {
           let object = try JSONSerialization.jsonObject(with: try decodeBase64URL(parts[index])) as? [String: Any]
     else { throw FixtureError(message: "segment \(index) is not a JSON object") }
     return object
+}
+
+/// 三組範例 claims(spec §4),供簽發與驗證規則的測試共用。
+enum SampleClaims {
+    static let firstParty = AccessTokenClaims(
+        issuer: "https://platform.example/identity-context", subject: "acc_8d1f", subjectType: .user,
+        clientId: "mendesky-first-party", audience: ["mendesky-services"], scope: ["*"],
+        sessionId: "auth_41c2", lifetime: .seconds(900))
+
+    static let application = AccessTokenClaims(
+        issuer: "https://oidc.jwcpas.net/oidc-context", subject: "3f2a9c1e-7b4d-4c1a-9e2f-0a1b2c3d4e5f",
+        subjectType: .application, clientId: "client-123", audience: ["mendesky-services"], scope: ["*"],
+        lifetime: .seconds(900))
+
+    static let delegated = AccessTokenClaims(
+        issuer: "https://oidc.jwcpas.net/oidc-context", subject: "acc_8d1f", subjectType: .user,
+        actors: ["mendesky-mcp-server", "claude-connector"], clientId: "mendesky-mcp-server",
+        audience: ["mendesky-services"], scope: ["quote:read"], lifetime: .seconds(300))
 }
