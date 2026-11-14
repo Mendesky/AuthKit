@@ -1,6 +1,6 @@
 import Foundation
 
-/// RFC 4648 §5 base64url(無 padding),供 JWT 組裝與 JWK 解析使用。
+/// RFC 4648 §5 base64url（無 padding），供 JWT 組裝與 JWK 解析使用。
 enum Base64URL {
     static func encode(_ data: Data) -> String {
         data.base64EncodedString()
@@ -9,7 +9,7 @@ enum Base64URL {
             .replacingOccurrences(of: "=", with: "")
     }
 
-    /// 解碼失敗(含非法字元、長度不合法)回傳 nil。
+    /// 解碼失敗（含非法字元、長度不合法）回傳 nil。
     static func decode(_ string: String) -> Data? {
         var base64 = string
             .replacingOccurrences(of: "-", with: "+")
