@@ -60,6 +60,8 @@ public struct AccessTokenSigner: Sendable {
     public func sign(_ claims: AccessTokenClaims, now: Date = .now) throws -> String {
         try claims.validate()
 
+        // 公開的錯誤 enum 已固定、不新增 case,所以 `now` 無法表示成整數秒與 exp 溢位這兩種
+        // 實務上不可能發生的情況,都借用 `.nonPositiveLifetime`(語意:算不出合法的 exp)。
         guard let iat = Int(exactly: now.timeIntervalSince1970.rounded(.down)) else {
             throw AccessTokenSignerError.nonPositiveLifetime
         }
