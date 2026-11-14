@@ -1,5 +1,7 @@
 import Testing
 import Foundation
+import Crypto
+import _CryptoExtras
 @testable import AuthKit
 
 @Suite("AccessTokenSigner key loading")
@@ -62,5 +64,31 @@ struct AccessTokenSignerKeyTests {
         let n = Data([0x7F] + [UInt8](repeating: 0xFF, count: 255))
         jwk["n"] = Base64URL.encode(n)
         #expect(throws: AccessTokenSignerError.keyTooSmall(bits: 2047)) { try AccessTokenSigner(signingKeyJWK: try jwkData(jwk)) }
+    }
+
+    @Test func acceptsPKCS8AndPKCS1PEM() throws {
+        let pkcs8 = String(decoding: try loadFixture("rsa-2048.pem"), as: UTF8.self)
+        #expect(try AccessTokenSigner(signingKeyPEM: pkcs8, kid: "pem-1").kid == "pem-1")
+        let pkcs1 = try _RSA.Signing.PrivateKey(pemRepresentation: pkcs8).pemRepresentation
+        #expect(pkcs1.contains("BEGIN RSA PRIVATE KEY"))
+        #expect(try AccessTokenSigner(signingKeyPEM: pkcs1, kid: "pem-1").kid == "pem-1")
+    }
+
+    @Test func pemRejectsEmptyKid() throws {
+        let pem = String(decoding: try loadFixture("rsa-2048.pem"), as: UTF8.self)
+        #expect(throws: AccessTokenSignerError.missingKid) { try AccessTokenSigner(signingKeyPEM: pem, kid: "") }
+    }
+
+    @Test func pemRejects1024BitKey() throws {
+        let pem = String(decoding: try loadFixture("rsa-1024.pem"), as: UTF8.self)
+        #expect(throws: AccessTokenSignerError.keyTooSmall(bits: 1024)) { try AccessTokenSigner(signingKeyPEM: pem, kid: "k") }
+    }
+
+    @Test func pemRejectsPublicKeyAndNonRSA() throws {
+        let pem = String(decoding: try loadFixture("rsa-2048.pem"), as: UTF8.self)
+        let publicPEM = try _RSA.Signing.PrivateKey(pemRepresentation: pem).publicKey.pemRepresentation
+        #expect(throws: AccessTokenSignerError.invalidKey) { try AccessTokenSigner(signingKeyPEM: publicPEM, kid: "k") }
+        let ecPEM = P256.Signing.PrivateKey().pemRepresentation
+        #expect(throws: AccessTokenSignerError.invalidKey) { try AccessTokenSigner(signingKeyPEM: ecPEM, kid: "k") }
     }
 }

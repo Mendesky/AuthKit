@@ -35,6 +35,18 @@ public struct AccessTokenSigner: Sendable {
         try self.init(privateKey: key, kid: kid)
     }
 
+    /// 從 RSA 私鑰 PEM(PKCS#8 或 PKCS#1)建立,kid 由呼叫端明確提供。
+    /// 用 unsafe 版本解析以接受小金鑰,讓 `.keyTooSmall` 由共用的精確 bit 數檢查判斷。
+    public init(signingKeyPEM: String, kid: String) throws {
+        let key: _RSA.Signing.PrivateKey
+        do {
+            key = try _RSA.Signing.PrivateKey(unsafePEMRepresentation: signingKeyPEM)
+        } catch {
+            throw AccessTokenSignerError.invalidKey
+        }
+        try self.init(privateKey: key, kid: kid)
+    }
+
     /// 共用的 kid 與 bit 數檢查(PEM 路徑也走這裡)。
     init(privateKey: _RSA.Signing.PrivateKey, kid: String) throws {
         guard !kid.isEmpty else { throw AccessTokenSignerError.missingKid }
