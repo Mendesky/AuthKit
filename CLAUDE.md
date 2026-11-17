@@ -18,7 +18,7 @@ AuthKit 是 library：`Package.resolved` 不納入版本控制（已列入 `.git
 - **AuthKitGRPC** — 依賴 `AuthKit` 與 grpc-swift-2（`GRPCCore`）：
   - `BearerTokenServerInterceptor` 以 `BearerTokenAuth` 做決策的 gRPC server interceptor
   - `BearerTokenMetadata` client 端帶 bearer token 的 metadata
-- **AuthKitEventSourcing** — 依賴 `AuthKit` 與 swift-ddd-kit（`https://github.com/gradyzhuo/swift-ddd-kit.git`，1.4.0 起；產品名 `DDDKit`）：
+- **AuthKitEventSourcing** — 依賴 `AuthKit` 與 swift-ddd-kit（`https://github.com/gradyzhuo/swift-ddd-kit.git`，1.5.0 起；產品名 `DDDKit`）：
   - `SingleUseCode` 可單次兌換、綁定 PKCE 的 aggregate protocol（`markDelete()` 必須 append deleted event）
   - `SingleUseCodeRedeemer` 以 expected-version 寫入保證只兌換一次；只有版本衝突（`DDDError` 的 `.commitConflict`／`.streamPurged`）會轉成 `.alreadyRedeemed`，其他寫入錯誤原樣丟出
 
